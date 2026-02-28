@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import BuilderForm from "@/components/BuilderForm";
 import ResumePreview from "@/components/ResumePreview";
-import { Download } from "lucide-react";
+import ImportPdfModal from "@/components/ImportPdfModal";
+import { Download, Upload } from "lucide-react";
 import { useResume, useResumeStore } from "@/lib/ResumeContext";
 import { useReactToPrint } from "react-to-print";
 
 export default function Home() {
   const { template, setTemplate } = useResume();
   const contentRef = useRef<HTMLDivElement>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const handlePrint = useReactToPrint({
     contentRef,
@@ -51,6 +53,15 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Import PDF Button */}
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+            >
+              <Upload size={16} />
+              Import PDF
+            </button>
+
             {/* Save Button */}
             <button
               onClick={() => {
@@ -61,7 +72,6 @@ export default function Home() {
             >
               Save
             </button>
-
 
             {/* Print PDF Button */}
             <button
@@ -79,6 +89,11 @@ export default function Home() {
           <ResumePreview contentRef={contentRef} />
         </div>
       </main>
+
+      {/* Import PDF Modal */}
+      {showImportModal && (
+        <ImportPdfModal onClose={() => setShowImportModal(false)} />
+      )}
     </div>
   );
 }
