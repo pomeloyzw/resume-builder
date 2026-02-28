@@ -4,6 +4,8 @@ import React, { useState, useRef, useCallback } from "react";
 import { Upload, FileText, X, CheckCircle, AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { useResumeStore } from "@/lib/ResumeContext";
 import { ResumeData } from "@/types/resume";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type ImportState = "idle" | "loading" | "success" | "error";
 type ParseMethod = "local" | "ai";
@@ -173,39 +175,20 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 print:hidden"
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-      {/* Modal Card */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-in"
-        style={{ animation: "modalIn 0.25s ease-out" }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200/60">
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-white/95 backdrop-blur-xl border border-white/20 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <DialogHeader className="px-6 py-4 border-b border-gray-200/60 flex flex-row items-center justify-between gap-3 space-y-0 text-left">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md flex-shrink-0">
               <Upload size={18} className="text-white" />
             </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Import PDF Resume</h2>
-              <p className="text-xs text-gray-500">Upload your existing resume to populate the builder</p>
+            <div className="flex flex-col">
+              <DialogTitle className="text-lg font-semibold text-gray-900 leading-none mb-1">Import PDF Resume</DialogTitle>
+              <DialogDescription className="text-xs text-gray-500">Upload your existing resume to populate the builder</DialogDescription>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-700 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Body */}
         <div className="p-6">
           {state === "idle" && (
             <div
@@ -276,16 +259,17 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
                 <p className="text-sm font-semibold text-gray-800">Import Failed</p>
                 <p className="text-xs text-red-500 mt-1 max-w-xs">{error}</p>
               </div>
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setState("idle");
                   setError("");
                   setFileName("");
                 }}
-                className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
               >
                 Try again
-              </button>
+              </Button>
             </div>
           )}
 
@@ -334,17 +318,18 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
                     <p className="text-xs font-medium text-gray-700">Results not accurate?</p>
                     <p className="text-[10px] text-gray-400 mt-0.5">Re-parse with AI for better accuracy</p>
                   </div>
-                  <button
+                  <Button
+                    variant="outline"
                     onClick={handleAiReparse}
                     disabled={aiLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-1.5 h-auto text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border-purple-200 transition-colors cursor-pointer"
                   >
                     {aiLoading ? (
                       <><Loader2 size={12} className="animate-spin" /> Parsing…</>
                     ) : (
                       <><Sparkles size={12} /> Use AI</>
                     )}
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -363,7 +348,8 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
         {/* Footer */}
         {state === "success" && (
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200/60 bg-gray-50/50">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => {
                 setState("idle");
                 setParsedData(null);
@@ -373,35 +359,21 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
                 setParseMethod("local");
                 setError("");
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleImport}
               disabled={aiLoading}
-              className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Import Resume
-            </button>
+            </Button>
           </div>
         )}
-      </div>
-
-      {/* Inline animation keyframes */}
-      <style jsx>{`
-        @keyframes modalIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-      `}</style>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

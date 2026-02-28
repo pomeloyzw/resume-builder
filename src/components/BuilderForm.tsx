@@ -4,6 +4,13 @@ import React, { useState } from "react";
 import { useResume } from "@/lib/ResumeContext";
 import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2, Eye, EyeOff } from "lucide-react";
 import TagInput from "./TagInput";
+import RichTextEditor from "./RichTextEditor";
+import { MonthYearPicker } from "./MonthYearPicker";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   DndContext,
   closestCenter,
@@ -22,24 +29,23 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const InputField = ({ label, value, onChange, placeholder = "", type = "text", as = "input" }: any) => (
-  // ... existing code ...
-  <div className="flex flex-col gap-1 w-full flex-1">
-    <label className="text-sm font-medium text-gray-700">{label}</label>
+const InputField = ({ label, value, onChange, placeholder = "", type = "text", as = "input", disabled = false }: any) => (
+  <div className="flex flex-col gap-1.5 w-full flex-1">
+    <Label>{label}</Label>
     {as === "textarea" ? (
-      <textarea
+      <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-h-[100px] rounded-md border border-gray-300 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-y"
+        className="min-h-[100px] resize-y"
       />
     ) : (
-      <input
+      <Input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-gray-300 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+        disabled={disabled}
       />
     )}
   </div>
@@ -90,27 +96,28 @@ function SortableSection({ id, title, isVisible, onToggleVisibility, activeSecti
           >
             <GripVertical size={20} />
           </div>
-          <button
-            type="button"
-            className="flex-1 text-left flex items-center justify-between outline-none"
+          <Button
+            variant="ghost"
+            className="flex-1 justify-between px-2 py-1.5 h-auto text-lg font-semibold text-gray-800 hover:bg-transparent"
             onClick={() => setActiveSection(isActive ? "" : id)}
           >
-            <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+            {title}
             {isActive ? <ChevronUp size={20} className="text-gray-500" /> : <ChevronDown size={20} className="text-gray-500" />}
-          </button>
+          </Button>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             onToggleVisibility(id);
           }}
-          className="ml-3 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+          className="ml-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
           title={isVisible ? "Hide section on resume" : "Show section on resume"}
         >
           {isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
-        </button>
+        </Button>
       </div>
 
       {isActive && (
@@ -152,12 +159,14 @@ function SortableItemWrapper({ id, children, onDelete }: { id: string, children:
         <GripVertical size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onDelete}
-          className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+          className="absolute top-2 right-2 h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
         >
           <Trash2 size={16} />
-        </button>
+        </Button>
         {children}
       </div>
     </div>
@@ -349,7 +358,10 @@ export default function BuilderForm() {
       case 'summary':
         return (
           <div className="p-4">
-            <InputField as="textarea" label="Summary" value={data.summary} onChange={updateSummary} placeholder="Write a brief summary of your professional background..." />
+            <div className="flex flex-col gap-1 w-full flex-1">
+              <Label>Summary</Label>
+              <RichTextEditor content={data.summary || ""} onChange={updateSummary} placeholder="Write a brief summary of your professional background..." />
+            </div>
           </div>
         );
       case 'experience':
@@ -367,20 +379,50 @@ export default function BuilderForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-6">
                       <InputField label="Company" value={exp.company} onChange={(v: string) => updateExperience(exp.id, "company", v)} />
                       <InputField label="Position" value={exp.position} onChange={(v: string) => updateExperience(exp.id, "position", v)} />
-                      <InputField label="Start Date" value={exp.startDate} onChange={(v: string) => updateExperience(exp.id, "startDate", v)} />
-                      <InputField label="End Date" value={exp.endDate} onChange={(v: string) => updateExperience(exp.id, "endDate", v)} />
+                      <div className="flex flex-col gap-1 w-full flex-1 justify-end">
+                        <Label>Start Date</Label>
+                        <MonthYearPicker value={exp.startDate} onChange={(v: string) => updateExperience(exp.id, "startDate", v)} />
+                      </div>
+                      <div className="flex flex-col gap-1 w-full flex-1 justify-end">
+                        <div className="flex items-end justify-between w-full">
+                          <Label>End Date</Label>
+                          <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer h-full pt-2">
+                            <Checkbox
+                              checked={exp.endDate?.toLowerCase() === "present" || exp.endDate?.toLowerCase() === "current"}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  updateExperience(exp.id, "endDate", "Present");
+                                } else {
+                                  updateExperience(exp.id, "endDate", "");
+                                }
+                              }}
+                              className="border-gray-300 rounded"
+                            />
+                            Present
+                          </label>
+                        </div>
+                        <MonthYearPicker
+                          value={exp.endDate?.toLowerCase() === "present" || exp.endDate?.toLowerCase() === "current" ? "" : exp.endDate}
+                          disabled={exp.endDate?.toLowerCase() === "present" || exp.endDate?.toLowerCase() === "current"}
+                          onChange={(e) => updateExperience(exp.id, "endDate", e)}
+                        />
+                      </div>
                     </div>
-                    <InputField as="textarea" label="Description" value={exp.description} onChange={(v: string) => updateExperience(exp.id, "description", v)} placeholder="Describe your responsibilities and achievements..." />
+                    <div className="flex flex-col gap-1 w-full flex-1">
+                      <Label>Description</Label>
+                      <RichTextEditor content={exp.description || ""} onChange={(v: string) => updateExperience(exp.id, "description", v)} placeholder="Describe your responsibilities and achievements..." />
+                    </div>
                   </SortableItemWrapper>
                 ))}
               </SortableContext>
             </DndContext>
-            <button
+            <Button
+              variant="outline"
               onClick={addExperience}
-              className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500 transition-colors font-medium text-sm"
+              className="w-full py-6 border-dashed border-2 hover:border-blue-500 hover:text-blue-500"
             >
-              <Plus size={16} /> Add Experience
-            </button>
+              <Plus size={16} className="mr-2" /> Add Experience
+            </Button>
           </div>
         );
       case 'education':
@@ -398,19 +440,30 @@ export default function BuilderForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-6">
                       <InputField label="Institution" value={edu.institution} onChange={(v: string) => updateEducation(edu.id, "institution", v)} />
                       <InputField label="Degree" value={edu.degree} onChange={(v: string) => updateEducation(edu.id, "degree", v)} />
-                      <InputField label="Start Date" value={edu.startDate} onChange={(v: string) => updateEducation(edu.id, "startDate", v)} />
-                      <InputField label="End Date" value={edu.endDate} onChange={(v: string) => updateEducation(edu.id, "endDate", v)} />
+                      <div className="flex flex-col gap-1 w-full flex-1">
+                        <Label>Start Date</Label>
+                        <MonthYearPicker value={edu.startDate} onChange={(v: string) => updateEducation(edu.id, "startDate", v)} />
+                      </div>
+                      <div className="flex flex-col gap-1 w-full flex-1">
+                        <Label>End Date</Label>
+                        <MonthYearPicker value={edu.endDate} onChange={(v: string) => updateEducation(edu.id, "endDate", v)} />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1 w-full flex-1 mt-4">
+                      <Label>Description (Optional)</Label>
+                      <RichTextEditor content={edu.description || ""} onChange={(v: string) => updateEducation(edu.id, "description", v)} placeholder="Describe your coursework, honors, or thesis..." />
                     </div>
                   </SortableItemWrapper>
                 ))}
               </SortableContext>
             </DndContext>
-            <button
+            <Button
+              variant="outline"
               onClick={addEducation}
-              className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500 transition-colors font-medium text-sm"
+              className="w-full py-6 border-dashed border-2 hover:border-blue-500 hover:text-blue-500"
             >
-              <Plus size={16} /> Add Education
-            </button>
+              <Plus size={16} className="mr-2" /> Add Education
+            </Button>
           </div>
         );
       case 'skills':
@@ -450,18 +503,22 @@ export default function BuilderForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-6">
                       <InputField label="Name" value={cert.name} onChange={(v: string) => updateCertification(cert.id, "name", v)} />
                       <InputField label="Issuer" value={cert.issuer} onChange={(v: string) => updateCertification(cert.id, "issuer", v)} />
-                      <InputField label="Date" value={cert.date} onChange={(v: string) => updateCertification(cert.id, "date", v)} />
+                      <div className="flex flex-col gap-1 w-full flex-1">
+                        <Label>Date</Label>
+                        <MonthYearPicker value={cert.date} onChange={(v: string) => updateCertification(cert.id, "date", v)} />
+                      </div>
                     </div>
                   </SortableItemWrapper>
                 ))}
               </SortableContext>
             </DndContext>
-            <button
+            <Button
+              variant="outline"
               onClick={addCertification}
-              className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500 transition-colors font-medium text-sm"
+              className="w-full py-6 border-dashed border-2 hover:border-blue-500 hover:text-blue-500"
             >
-              <Plus size={16} /> Add Certification
-            </button>
+              <Plus size={16} className="mr-2" /> Add Certification
+            </Button>
           </div>
         );
       case 'hobbies':
@@ -487,13 +544,15 @@ export default function BuilderForm() {
                   value={customSection.title}
                   onChange={(v: string) => updateCustomSectionTitle(customSection.id, v)}
                 />
-                <button
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="mt-6 ml-2"
                   onClick={() => deleteCustomSection(customSection.id)}
-                  className="mt-6 p-2.5 text-red-500 hover:bg-red-50 rounded-md transition-colors whitespace-nowrap"
                   title="Remove this custom section entirely"
                 >
-                  <Trash2 size={20} />
-                </button>
+                  <Trash2 size={18} />
+                </Button>
               </div>
 
               <DndContext
@@ -524,19 +583,26 @@ export default function BuilderForm() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-6">
                         <InputField label="Item Title (e.g. Project Name)" value={item.title} onChange={(v: string) => updateCustomSectionItem(customSection.id, item.id, "title", v)} />
                         <InputField label="Subtitle (e.g. Role)" value={item.subtitle} onChange={(v: string) => updateCustomSectionItem(customSection.id, item.id, "subtitle", v)} />
-                        <InputField label="Date" value={item.date} onChange={(v: string) => updateCustomSectionItem(customSection.id, item.id, "date", v)} />
+                        <div className="flex flex-col gap-1 w-full flex-1">
+                          <Label>Date</Label>
+                          <MonthYearPicker value={item.date} onChange={(v: string) => updateCustomSectionItem(customSection.id, item.id, "date", v)} />
+                        </div>
                       </div>
-                      <InputField as="textarea" label="Description" value={item.description} onChange={(v: string) => updateCustomSectionItem(customSection.id, item.id, "description", v)} placeholder="Describe the details..." />
+                      <div className="flex flex-col gap-1 w-full flex-1">
+                        <Label>Description</Label>
+                        <RichTextEditor content={item.description || ""} onChange={(v: string) => updateCustomSectionItem(customSection.id, item.id, "description", v)} placeholder="Describe the details..." />
+                      </div>
                     </SortableItemWrapper>
                   ))}
                 </SortableContext>
               </DndContext>
-              <button
+              <Button
+                variant="outline"
                 onClick={() => addCustomSectionItem(customSection.id)}
-                className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500 transition-colors font-medium text-sm"
+                className="w-full py-6 border-dashed border-2 hover:border-blue-500 hover:text-blue-500"
               >
-                <Plus size={16} /> Add Item
-              </button>
+                <Plus size={16} className="mr-2" /> Add Item
+              </Button>
             </div>
           );
         }
@@ -573,12 +639,13 @@ export default function BuilderForm() {
       </DndContext>
 
       {/* Add Custom Section Button */}
-      <button
+      <Button
+        variant="outline"
         onClick={() => addCustomSection("New Custom Section")}
-        className="flex items-center justify-center gap-2 w-full py-4 border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-xl text-blue-600 hover:border-blue-500 hover:bg-blue-50 transition-all font-semibold shadow-sm"
+        className="w-full py-8 border-dashed border-2 border-blue-300 bg-blue-50/50 text-blue-600 hover:border-blue-500 hover:bg-blue-50 font-semibold cursor-pointer"
       >
-        <Plus size={18} /> Add Custom Section (Projects, Awards, etc.)
-      </button>
+        <Plus size={18} className="mr-2" /> Add Custom Section (Projects, Awards, etc.)
+      </Button>
     </div>
   );
 }

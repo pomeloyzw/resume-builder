@@ -56,6 +56,7 @@ const defaultData: ResumeData = {
       degree: "B.S. in Computer Science",
       startDate: "Sep 2014",
       endDate: "May 2018",
+      description: "",
     }
   ],
   skills: [

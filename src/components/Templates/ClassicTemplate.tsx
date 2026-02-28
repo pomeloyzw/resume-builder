@@ -2,6 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { ResumeData } from "@/types/resume";
+import { formatDateStr } from "@/lib/utils";
 
 const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
   ({ data }, ref) => {
@@ -41,9 +42,10 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                   <h3 className="text-lg font-bold uppercase tracking-widest text-gray-800 border-b border-gray-300 pb-1 mb-3">
                     {section.title}
                   </h3>
-                  <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
-                    {data.summary}
-                  </p>
+                  <div
+                    className="text-gray-700 leading-relaxed text-sm tiptap-content"
+                    dangerouslySetInnerHTML={{ __html: data.summary }}
+                  />
                 </section>
               );
             }
@@ -62,15 +64,16 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             {exp.position}
                           </h4>
                           <span className="text-sm font-medium text-gray-600 italic">
-                            {exp.startDate} – {exp.endDate}
+                            {formatDateStr(exp.startDate)} – {formatDateStr(exp.endDate)}
                           </span>
                         </div>
                         <div className="font-semibold text-gray-700 mb-2 text-sm">
                           {exp.company}
                         </div>
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                          {exp.description}
-                        </p>
+                        <div
+                          className="text-sm text-gray-700 leading-relaxed tiptap-content"
+                          dangerouslySetInnerHTML={{ __html: exp.description }}
+                        />
                       </div>
                     ))}
                   </div>
@@ -92,12 +95,18 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             {edu.degree}
                           </h4>
                           <span className="text-sm font-medium text-gray-600 italic">
-                            {edu.startDate} – {edu.endDate}
+                            {formatDateStr(edu.startDate)} – {formatDateStr(edu.endDate)}
                           </span>
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           {edu.institution}
                         </div>
+                        {edu.description && (
+                          <div
+                            className="text-sm text-gray-700 leading-relaxed mt-1 tiptap-content"
+                            dangerouslySetInnerHTML={{ __html: edu.description }}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -119,7 +128,7 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                           <span className="text-sm text-gray-700 ml-2">({cert.issuer})</span>
                         </div>
                         <span className="text-sm font-medium text-gray-600 italic">
-                          {cert.date}
+                          {formatDateStr(cert.date)}
                         </span>
                       </div>
                     ))}
@@ -184,7 +193,7 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             </h4>
                             {item.date && (
                               <span className="text-sm font-medium text-gray-600 italic">
-                                {item.date}
+                                {formatDateStr(item.date)}
                               </span>
                             )}
                           </div>
@@ -194,9 +203,10 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             </div>
                           )}
                           {item.description && (
-                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mt-1">
-                              {item.description}
-                            </p>
+                            <div
+                              className="text-sm text-gray-700 leading-relaxed mt-1 tiptap-content"
+                              dangerouslySetInnerHTML={{ __html: item.description }}
+                            />
                           )}
                         </div>
                       ))}

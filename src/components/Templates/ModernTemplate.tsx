@@ -3,6 +3,7 @@
 import React, { forwardRef } from "react";
 import { ResumeData } from "@/types/resume";
 import { Mail, MapPin, Phone, Globe, Github, Linkedin } from "lucide-react";
+import { formatDateStr } from "@/lib/utils";
 
 const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
   ({ data }, ref) => {
@@ -129,9 +130,10 @@ const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                       <div className="w-8 h-[2px] bg-blue-600"></div>
                       {section.title}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">
-                      {data.summary}
-                    </p>
+                    <div
+                      className="text-gray-600 leading-relaxed text-sm tiptap-content"
+                      dangerouslySetInnerHTML={{ __html: data.summary }}
+                    />
                   </section>
                 );
               }
@@ -152,13 +154,14 @@ const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             <div className="flex justify-between items-center mt-1">
                               <span className="font-semibold text-blue-600 text-sm">{exp.company}</span>
                               <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-                                {exp.startDate} – {exp.endDate}
+                                {formatDateStr(exp.startDate)} – {formatDateStr(exp.endDate)}
                               </span>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap mt-3">
-                            {exp.description}
-                          </p>
+                          <div
+                            className="text-sm text-gray-600 leading-relaxed mt-3 tiptap-content"
+                            dangerouslySetInnerHTML={{ __html: exp.description }}
+                          />
                         </div>
                       ))}
                     </div>
@@ -181,9 +184,15 @@ const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mt-1 gap-1">
                             <span className="font-medium text-gray-600 text-sm">{edu.institution}</span>
                             <span className="text-xs font-medium text-gray-500">
-                              {edu.startDate} – {edu.endDate}
+                              {formatDateStr(edu.startDate)} – {formatDateStr(edu.endDate)}
                             </span>
                           </div>
+                          {edu.description && (
+                            <div
+                              className="text-sm text-gray-600 leading-relaxed mt-2 tiptap-content"
+                              dangerouslySetInnerHTML={{ __html: edu.description }}
+                            />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -206,7 +215,7 @@ const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mt-1 gap-1">
                             <span className="font-medium text-gray-600 text-sm">{cert.issuer}</span>
                             <span className="text-xs font-medium text-gray-500">
-                              {cert.date}
+                              {formatDateStr(cert.date)}
                             </span>
                           </div>
                         </div>
@@ -235,15 +244,16 @@ const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                                 {item.subtitle && <span className="font-medium text-blue-600 text-sm">{item.subtitle}</span>}
                                 {item.date && (
                                   <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-                                    {item.date}
+                                    {formatDateStr(item.date)}
                                   </span>
                                 )}
                               </div>
                             </div>
                             {item.description && (
-                              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap mt-2">
-                                {item.description}
-                              </p>
+                              <div
+                                className="text-sm text-gray-600 leading-relaxed mt-2 tiptap-content"
+                                dangerouslySetInnerHTML={{ __html: item.description }}
+                              />
                             )}
                           </div>
                         ))}
