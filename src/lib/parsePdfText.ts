@@ -95,13 +95,13 @@ const linkedinRegex = /linkedin\.com\/in\/[^\s,)"'}\]]+/i;
 const githubRegex = /github\.com\/[^\s,)"'}\]]+/i;
 
 const SECTION_HEADERS = [
-  { key: "summary", patterns: [/^(?:professional\s+)?summary/i, /^(?:about\s+me|profile|objective)/i] },
-  { key: "experience", patterns: [/^(?:work\s+)?experience/i, /^employment\s+history/i, /^work\s+history/i, /^professional\s+experience/i] },
-  { key: "education", patterns: [/^education/i, /^academic/i] },
-  { key: "skills", patterns: [/^(?:technical\s+)?skills/i, /^core\s+competencies/i, /^competencies/i] },
-  { key: "certifications", patterns: [/^certifications?/i, /^licenses?\s*(?:&|and)\s*certifications?/i, /^certifications?\s*(?:&|and)\s*licenses?/i] },
-  { key: "languages", patterns: [/^languages?/i] },
-  { key: "hobbies", patterns: [/^hobbies/i, /^interests/i, /^hobbies\s*(?:&|and)\s*interests/i] },
+  { key: "summary", patterns: [/^(?:professional\s+)?summary$/i, /^(?:about\s+me|profile|objective)$/i] },
+  { key: "experience", patterns: [/^(?:work\s+)?experience$/i, /^employment\s+history$/i, /^work\s+history$/i, /^professional\s+experience$/i] },
+  { key: "education", patterns: [/^education$/i, /^academic$/i] },
+  { key: "skills", patterns: [/^(?:technical\s+)?skills$/i, /^core\s+competencies$/i, /^competencies$/i] },
+  { key: "certifications", patterns: [/^certifications?$/i, /^licenses?\s*(?:&|and)\s*certifications?$/i, /^certifications?\s*(?:&|and)\s*licenses?$/i] },
+  { key: "languages", patterns: [/^languages?$/i] },
+  { key: "hobbies", patterns: [/^hobbies$/i, /^interests$/i, /^hobbies\s*(?:&|and)\s*interests$/i] },
 ];
 
 function identifySection(line: string): string | null {
@@ -118,7 +118,12 @@ function identifySection(line: string): string | null {
 const datePatternStr =
   "(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\\s+\\d{4}|\\d{1,2}\\/\\d{4}|\\d{4})";
 const dateRangeRegex = new RegExp(
-  `(${datePatternStr})\\s*[-–—]\\s*(${datePatternStr}|[Pp]resent|[Cc]urrent)`,
+  `(${datePatternStr})\\s*[-–—\\u2013\\u2014]\\s*(${datePatternStr}|[Pp]resent|[Cc]urrent)`,
+  "i"
+);
+// Standalone date range on its own line (templates often render dates separately)
+const standaloneDateRangeRegex = new RegExp(
+  `^\\s*(${datePatternStr})\\s*[-–—\\u2013\\u2014]\\s*(${datePatternStr}|[Pp]resent|[Cc]urrent)\\s*$`,
   "i"
 );
 
@@ -184,13 +189,28 @@ export function parsePdfText(text: string): Partial<ResumeData> {
     }
   }
 
-  // Name is typically the first line
-  const fullName = headerLines[0] ?? "";
-  // Job title is typically the second line (if it's not an email/phone)
+  // Name is typically the first non-contact line
+  // Filter out header lines that are purely contact info or section-like
+  const nonContactHeaders = headerLines.filter(
+    (hl) =>
+      !emailRegex.test(hl) &&
+      !phoneRegex.test(hl) &&
+      !linkedinRegex.test(hl) &&
+      !githubRegex.test(hl) &&
+      !/^https?:\/\//i.test(hl) &&
+      !/^www\./i.test(hl) &&
+      !/^LinkedIn:/i.test(hl) &&
+      !/^GitHub:/i.test(hl)
+  );
+
+  const fullName = nonContactHeaders[0] ?? headerLines[0] ?? "";
+
+  // Job title is typically the second non-contact line (if present)
   let jobTitle = "";
-  if (headerLines.length > 1) {
-    const candidate = headerLines[1];
-    if (!emailRegex.test(candidate) && !phoneRegex.test(candidate)) {
+  if (nonContactHeaders.length > 1) {
+    const candidate = nonContactHeaders[1];
+    // Reject if it looks like a location (City, ST pattern) or a URL
+    if (!/^[A-Z][a-zA-Z\s]+,\s*[A-Z]{2}/.test(candidate)) {
       jobTitle = candidate;
     }
   }
@@ -198,11 +218,24 @@ export function parsePdfText(text: string): Partial<ResumeData> {
   // Try to extract location from header lines
   let location = "";
   for (const hl of headerLines) {
-    // Common pattern: City, State or City, Country
+    // Classic template: "• San Francisco, CA •" embedded in contact line
+    // Modern template: standalone "San Francisco, CA" line
     const locMatch = hl.match(/([A-Z][a-zA-Z\s]+,\s*[A-Z]{2}(?:\s+\d{5})?)/);
     if (locMatch) {
       location = locMatch[1];
       break;
+    }
+  }
+
+  // Also check full text for location if not found in headers (some layouts
+  // place it within the contact section that ends up in a section block)
+  if (!location) {
+    for (const line of lines.slice(0, 15)) {
+      const locMatch = line.match(/([A-Z][a-zA-Z\s]+,\s*[A-Z]{2}(?:\s+\d{5})?)/);
+      if (locMatch && !identifySection(line)) {
+        location = locMatch[1];
+        break;
+      }
     }
   }
 
@@ -287,31 +320,45 @@ function parseExperience(lines: string[]): Experience[] {
     }
   };
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const dateMatch = line.match(dateRangeRegex);
+    const standaloneDate = line.match(standaloneDateRangeRegex);
+
     if (dateMatch) {
-      flushCurrent();
       const startDate = dateMatch[1];
       const endDate = dateMatch[2];
-      const remainder = line.replace(dateRangeRegex, "").replace(/[|•·,\-–—]+$/, "").trim();
+      const remainder = line.replace(dateRangeRegex, "").replace(/[|•·,\-–—]+$/g, "").trim();
 
-      current = { startDate, endDate };
-
-      // The remainder might contain position and/or company
-      if (remainder) {
-        // Try to separate position | company with common delimiters
-        const parts = remainder.split(/\s*[|•·]\s*|\s+at\s+|\s*,\s+/).filter(Boolean);
-        if (parts.length >= 2) {
-          current.position = parts[0];
-          current.company = parts[1];
+      if (standaloneDate) {
+        // Date is on its own line — attach to current entry being built,
+        // or look backwards for position/company context
+        if (current && !current.startDate) {
+          current.startDate = startDate;
+          current.endDate = endDate;
         } else {
-          current.position = parts[0];
+          // Start a new entry; the previous line(s) likely had position/company
+          flushCurrent();
+          current = { startDate, endDate };
+        }
+      } else {
+        // Date embedded inline with other text
+        flushCurrent();
+        current = { startDate, endDate };
+
+        if (remainder) {
+          const parts = remainder.split(/\s*[|•·]\s*|\s+at\s+|\s*,\s+/).filter(Boolean);
+          if (parts.length >= 2) {
+            current.position = parts[0];
+            current.company = parts[1];
+          } else {
+            current.position = parts[0];
+          }
         }
       }
     } else if (current) {
       // If we haven't assigned company yet, this line might be company or position
       if (!current.company && !descLines.length) {
-        // Check if this looks like a position/company line (no bullet points)
         if (!line.startsWith("•") && !line.startsWith("-") && !line.startsWith("*") && line.length < 80) {
           if (!current.position) {
             current.position = line;
@@ -323,10 +370,14 @@ function parseExperience(lines: string[]): Experience[] {
       }
       descLines.push(line.replace(/^[•\-*]\s*/, ""));
     } else {
-      // First line before any date — could be a position or company
-      const dateMatch2 = line.match(dateRangeRegex);
-      if (!dateMatch2 && !current) {
-        // Start a potential entry
+      // Line before any date — could be a position or company
+      // Check if the next line is a date range; if so, start building an entry
+      const nextLine = i + 1 < lines.length ? lines[i + 1] : null;
+      const nextIsDate = nextLine?.match(dateRangeRegex);
+      if (nextIsDate) {
+        current = { position: line };
+      } else {
+        // Start a potential entry anyway
         current = { position: line };
       }
     }
@@ -354,16 +405,26 @@ function parseEducation(lines: string[]): Education[] {
     }
   };
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const dateMatch = line.match(dateRangeRegex);
+    const standaloneDate = line.match(standaloneDateRangeRegex);
+
     if (dateMatch) {
-      flushCurrent();
       const startDate = dateMatch[1];
       const endDate = dateMatch[2];
-      const remainder = line.replace(dateRangeRegex, "").replace(/[|•·,\-–—]+$/, "").trim();
-      current = { startDate, endDate };
-      if (remainder) {
-        current.degree = remainder;
+      const remainder = line.replace(dateRangeRegex, "").replace(/[|•·,\-–—]+$/g, "").trim();
+
+      if (standaloneDate && current && !current.startDate) {
+        // Date on its own line — attach to the current entry
+        current.startDate = startDate;
+        current.endDate = endDate;
+      } else {
+        flushCurrent();
+        current = { startDate, endDate };
+        if (remainder) {
+          current.degree = remainder;
+        }
       }
     } else if (current) {
       if (!current.degree) {
@@ -372,8 +433,9 @@ function parseEducation(lines: string[]): Education[] {
         current.institution = line;
       }
     } else {
-      // Line before any date — likely institution or degree
-      current = { institution: line };
+      // Line before any date — likely degree or institution
+      // In both templates, degree appears first then institution below
+      current = { degree: line };
     }
   }
   flushCurrent();

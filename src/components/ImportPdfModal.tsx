@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
-import { Upload, FileText, X, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, X, CheckCircle, AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { useResumeStore } from "@/lib/ResumeContext";
 import { ResumeData } from "@/types/resume";
 
 type ImportState = "idle" | "loading" | "success" | "error";
+type ParseMethod = "local" | "ai";
 
 type ParseSummary = {
   name: string;
@@ -23,9 +24,21 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
   const [fileName, setFileName] = useState("");
   const [summary, setSummary] = useState<ParseSummary | null>(null);
   const [parsedData, setParsedData] = useState<Partial<ResumeData> | null>(null);
+  const [parseMethod, setParseMethod] = useState<ParseMethod>("local");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [extractedText, setExtractedText] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const setData = useResumeStore((s) => s.setData);
+
+  const buildSummary = (parsed: Partial<ResumeData>): ParseSummary => ({
+    name: parsed.personalInfo?.fullName ?? "",
+    email: parsed.personalInfo?.email ?? "",
+    experienceCount: parsed.experience?.length ?? 0,
+    educationCount: parsed.education?.length ?? 0,
+    skillsCount: parsed.skills?.length ?? 0,
+    certificationsCount: parsed.certifications?.length ?? 0,
+  });
 
   const processFile = useCallback(async (file: File) => {
     // Strict PDF validation
@@ -37,6 +50,7 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
 
     setFileName(file.name);
     setState("loading");
+    setParseMethod("local");
     setError("");
 
     try {
@@ -48,36 +62,56 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
         throw new Error("Could not extract any text from this PDF. The file may be image-based or empty.");
       }
 
-      // Step 2: Send text to Gemini API for intelligent parsing
-      const res = await fetch("/api/parse-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
+      // Save extracted text for potential AI re-parse later
+      setExtractedText(text);
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to parse resume");
-      }
+      // Step 2: Parse locally with heuristic parser (no API call)
+      const { parsePdfText } = await import("@/lib/parsePdfText");
+      const parsed = parsePdfText(text);
 
-      const { data: parsed } = await res.json();
+      // Debug: check extracted text structure
+      console.log("── PDF Import Debug ──");
+      console.log("Extracted text:\n", text);
+      console.log("Parsed result:", JSON.stringify(parsed, null, 2));
+      console.log("──────────────────────");
+
       setParsedData(parsed);
-
-      setSummary({
-        name: parsed.personalInfo?.fullName ?? "",
-        email: parsed.personalInfo?.email ?? "",
-        experienceCount: parsed.experience?.length ?? 0,
-        educationCount: parsed.education?.length ?? 0,
-        skillsCount: parsed.skills?.length ?? 0,
-        certificationsCount: parsed.certifications?.length ?? 0,
-      });
-
+      setSummary(buildSummary(parsed));
       setState("success");
     } catch (err: any) {
       setState("error");
       setError(err.message || "An unexpected error occurred while parsing the PDF.");
     }
   }, []);
+
+  const handleAiReparse = useCallback(async () => {
+    if (!extractedText) return;
+
+    setAiLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/parse-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: extractedText }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to parse resume with AI");
+      }
+
+      const { data: parsed } = await res.json();
+      setParsedData(parsed);
+      setSummary(buildSummary(parsed));
+      setParseMethod("ai");
+    } catch (err: any) {
+      setError(err.message || "AI parsing failed. Your local parse result is still available.");
+    } finally {
+      setAiLoading(false);
+    }
+  }, [extractedText]);
 
   const handleImport = () => {
     if (!parsedData) return;
@@ -227,7 +261,7 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-sm font-semibold text-gray-800">Analyzing your resume with AI…</p>
+                <p className="text-sm font-semibold text-gray-800">Parsing your resume…</p>
                 <p className="text-xs text-gray-500 mt-1">{fileName}</p>
               </div>
             </div>
@@ -261,9 +295,21 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
                 <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
                   <CheckCircle size={22} className="text-emerald-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-semibold text-gray-900">Resume parsed successfully!</p>
-                  <p className="text-xs text-gray-500">{fileName}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-gray-500">{fileName}</p>
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${parseMethod === "ai"
+                      ? "bg-purple-100 text-purple-700"
+                      : "bg-blue-100 text-blue-700"
+                      }`}>
+                      {parseMethod === "ai" ? (
+                        <><Sparkles size={10} /> AI Parsed</>
+                      ) : (
+                        "Local Parse"
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -281,6 +327,32 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
                 <SummaryCard label="Certifications" value={`${summary.certificationsCount} found`} />
               </div>
 
+              {/* AI Re-parse option */}
+              {parseMethod === "local" && (
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
+                  <div>
+                    <p className="text-xs font-medium text-gray-700">Results not accurate?</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Re-parse with AI for better accuracy</p>
+                  </div>
+                  <button
+                    onClick={handleAiReparse}
+                    disabled={aiLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {aiLoading ? (
+                      <><Loader2 size={12} className="animate-spin" /> Parsing…</>
+                    ) : (
+                      <><Sparkles size={12} /> Use AI</>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* AI error (non-fatal) */}
+              {error && parseMethod === "local" && (
+                <p className="text-xs text-red-500 text-center">{error}</p>
+              )}
+
               <p className="text-xs text-gray-400 text-center">
                 This will replace your current resume data with the imported content.
               </p>
@@ -297,6 +369,9 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
                 setParsedData(null);
                 setSummary(null);
                 setFileName("");
+                setExtractedText("");
+                setParseMethod("local");
+                setError("");
               }}
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
             >
@@ -304,7 +379,8 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
             </button>
             <button
               onClick={handleImport}
-              className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg shadow-md hover:shadow-lg transition-all"
+              disabled={aiLoading}
+              className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Import Resume
             </button>

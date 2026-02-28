@@ -208,6 +208,26 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
 
             return null;
           })}
+
+        {/* Hidden JSON resume data for re-import fidelity */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            padding: 0,
+            margin: "-1px",
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            whiteSpace: "nowrap",
+            borderWidth: 0,
+            color: "transparent",
+            fontSize: "1px",
+          }}
+        >
+          {`jsonresumedataX:${JSON.stringify(data)}`}
+        </div>
       </div>
     );
   }
