@@ -14,29 +14,66 @@ const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
 
+function normalizeToYYYYMM(val?: string): string | null {
+  if (!val) return null;
+  val = val.trim();
+  if (/^\d{4}-\d{2}$/.test(val)) return val;
+
+  const str = val.toLowerCase();
+  const yearMatch = str.match(/\b(20\d{2}|19\d{2})\b/);
+  if (!yearMatch) return null;
+  const year = yearMatch[1];
+
+  let monthIndex = -1;
+  const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  for (let i = 0; i < monthNames.length; i++) {
+    if (str.includes(monthNames[i])) {
+      monthIndex = i;
+      break;
+    }
+  }
+
+  if (monthIndex === -1) {
+    const slashMatch = str.match(/\b(\d{1,2})\/\d{4}\b/);
+    if (slashMatch) {
+      const p = parseInt(slashMatch[1], 10);
+      if (p >= 1 && p <= 12) monthIndex = p - 1;
+    }
+  }
+
+  if (monthIndex !== -1) {
+    return `${year}-${(monthIndex + 1).toString().padStart(2, '0')}`;
+  }
+
+  return `${year}-01`;
+}
+
 interface MonthYearPickerProps {
-  value?: string; // Expects YYYY-MM
+  value?: string; // Expects YYYY-MM, but now handles varied inputs gracefully
   onChange: (value: string) => void;
   disabled?: boolean;
 }
 
 export function MonthYearPicker({ value, onChange, disabled }: MonthYearPickerProps) {
   const [open, setOpen] = React.useState(false)
+
+  const normalizedValue = React.useMemo(() => normalizeToYYYYMM(value), [value]);
+
   const [currentYear, setCurrentYear] = React.useState<number>(() => {
-    if (value && /^\d{4}-\d{2}$/.test(value)) {
-      return parseInt(value.split('-')[0])
+    if (normalizedValue) {
+      return parseInt(normalizedValue.split('-')[0], 10);
     }
     return new Date().getFullYear();
   })
 
   // Sync internal year view with incoming value if it changes
   React.useEffect(() => {
-    if (value && /^\d{4}-\d{2}$/.test(value)) {
-      setCurrentYear(parseInt(value.split('-')[0]));
+    if (normalizedValue) {
+      setCurrentYear(parseInt(normalizedValue.split('-')[0], 10));
     }
-  }, [value]);
+  }, [normalizedValue]);
 
-  const selectedMonthStr = value && /^\d{4}-\d{2}$/.test(value) ? value : null;
+  const selectedMonthStr = normalizedValue;
 
   const handleMonthSelect = (monthIndex: number) => {
     const paddedMonth = (monthIndex + 1).toString().padStart(2, '0');
