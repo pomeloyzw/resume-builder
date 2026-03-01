@@ -126,6 +126,7 @@ const standaloneDateRangeRegex = new RegExp(
   `^\\s*(${datePatternStr})\\s*[-–—\\u2013\\u2014]\\s*(${datePatternStr}|[Pp]resent|[Cc]urrent)\\s*$`,
   "i"
 );
+const singleDateRegex = new RegExp(`\\b(${datePatternStr})\\b`, "i");
 
 // ─── main parser ────────────────────────────────────────────────────────────
 
@@ -450,8 +451,9 @@ function parseCertifications(lines: string[]): Certification[] {
 
   for (const line of lines) {
     // Try to extract a year or date
-    const yearMatch = line.match(/\b(20\d{2}|19\d{2})\b/);
-    const remaining = yearMatch ? line.replace(yearMatch[0], "").trim() : line;
+    const dateMatch = line.match(singleDateRegex);
+    const dateStr = dateMatch ? dateMatch[0] : "";
+    const remaining = dateMatch ? line.replace(dateMatch[0], "").trim() : line;
 
     // Try to split on common delimiters like " - ", " | ", " • "
     const parts = remaining.split(/\s*[-–—|•]\s*/).filter(Boolean);
@@ -460,7 +462,7 @@ function parseCertifications(lines: string[]): Certification[] {
       id: `cert-${Date.now()}-${certs.length}`,
       name: parts[0]?.replace(/[,;]+$/, "").trim() ?? line,
       issuer: parts[1]?.replace(/[,;]+$/, "").trim() ?? "",
-      date: yearMatch?.[0] ?? "",
+      date: dateStr,
     });
   }
 
