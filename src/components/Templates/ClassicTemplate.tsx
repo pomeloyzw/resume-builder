@@ -12,6 +12,7 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
         className="w-full max-w-[800px] mx-auto bg-white text-gray-900 p-10 min-h-[1056px] shadow-sm font-serif print:shadow-none print:p-8"
         style={{ width: "210mm", minHeight: "297mm" }}
       >
+        <style dangerouslySetInnerHTML={{ __html: "@page { margin: 12.7mm; }" }} />
         {/* Header */}
         <header className="text-center border-b-[3px] border-gray-800 pb-6 mb-6">
           <h1 className="text-4xl font-bold uppercase tracking-wider text-gray-900 mb-2">
