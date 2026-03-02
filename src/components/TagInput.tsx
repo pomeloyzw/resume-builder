@@ -55,6 +55,7 @@ export default function TagInput({ tags, onChange, placeholder = "Add an item...
               variant="ghost"
               size="icon"
               type="button"
+              aria-label={`Remove tag ${tag}`}
               onClick={(e) => {
                 e.stopPropagation();
                 removeTag(index);
