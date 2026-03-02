@@ -172,10 +172,11 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) processFile(file);
+    e.target.value = "";
   };
 
   return (
-    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog open={true} onOpenChange={(open) => { if (!open && state !== "loading" && !aiLoading) onClose(); }}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-white/95 backdrop-blur-xl border border-white/20 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <DialogHeader className="px-6 py-4 border-b border-gray-200/60 flex flex-row items-center justify-between gap-3 space-y-0 text-left">
           <div className="flex items-center gap-3">
