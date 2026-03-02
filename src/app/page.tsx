@@ -27,7 +27,7 @@ export default function Home() {
       <aside className="w-full md:w-5/12 lg:w-1/3 h-[50vh] md:h-screen overflow-y-auto border-r border-gray-200 bg-white shadow-lg z-10 print:hidden flex flex-col">
         <div className="p-6 border-b border-gray-200 bg-white sticky top-0 z-20">
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            Resume Builder
+            Premium Resume Builder
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Fill in your details, select a template, and export.
