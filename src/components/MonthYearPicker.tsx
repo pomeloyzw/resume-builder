@@ -105,6 +105,7 @@ export function MonthYearPicker({ value, onChange, disabled }: MonthYearPickerPr
         <div className="flex items-center justify-between pt-1 pb-4">
           <Button
             variant="outline"
+            aria-label="Previous year"
             className="h-8 w-8 bg-transparent p-0 text-gray-600 hover:text-gray-900 cursor-pointer"
             onClick={() => setCurrentYear(y => y - 1)}
           >
@@ -113,6 +114,7 @@ export function MonthYearPicker({ value, onChange, disabled }: MonthYearPickerPr
           <div className="text-sm font-semibold text-gray-900">{currentYear}</div>
           <Button
             variant="outline"
+            aria-label="Next year"
             className="h-8 w-8 bg-transparent p-0 text-gray-600 hover:text-gray-900 cursor-pointer"
             onClick={() => setCurrentYear(y => y + 1)}
           >
