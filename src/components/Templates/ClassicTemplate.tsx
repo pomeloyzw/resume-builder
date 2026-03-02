@@ -2,6 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { ResumeData } from "@/types/resume";
+import { formatDateStr } from "@/lib/utils";
 
 const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
   ({ data }, ref) => {
@@ -11,6 +12,7 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
         className="w-full max-w-[800px] mx-auto bg-white text-gray-900 p-10 min-h-[1056px] shadow-sm font-serif print:shadow-none print:p-8"
         style={{ width: "210mm", minHeight: "297mm" }}
       >
+        <style dangerouslySetInnerHTML={{ __html: "@page { margin: 12.7mm; }" }} />
         {/* Header */}
         <header className="text-center border-b-[3px] border-gray-800 pb-6 mb-6">
           <h1 className="text-4xl font-bold uppercase tracking-wider text-gray-900 mb-2">
@@ -41,9 +43,10 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                   <h3 className="text-lg font-bold uppercase tracking-widest text-gray-800 border-b border-gray-300 pb-1 mb-3">
                     {section.title}
                   </h3>
-                  <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
-                    {data.summary}
-                  </p>
+                  <div
+                    className="text-gray-700 leading-relaxed text-sm tiptap-content"
+                    dangerouslySetInnerHTML={{ __html: data.summary }}
+                  />
                 </section>
               );
             }
@@ -62,15 +65,16 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             {exp.position}
                           </h4>
                           <span className="text-sm font-medium text-gray-600 italic">
-                            {exp.startDate} – {exp.endDate}
+                            {formatDateStr(exp.startDate)} – {formatDateStr(exp.endDate)}
                           </span>
                         </div>
                         <div className="font-semibold text-gray-700 mb-2 text-sm">
                           {exp.company}
                         </div>
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                          {exp.description}
-                        </p>
+                        <div
+                          className="text-sm text-gray-700 leading-relaxed tiptap-content"
+                          dangerouslySetInnerHTML={{ __html: exp.description }}
+                        />
                       </div>
                     ))}
                   </div>
@@ -92,12 +96,18 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             {edu.degree}
                           </h4>
                           <span className="text-sm font-medium text-gray-600 italic">
-                            {edu.startDate} – {edu.endDate}
+                            {formatDateStr(edu.startDate)} – {formatDateStr(edu.endDate)}
                           </span>
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           {edu.institution}
                         </div>
+                        {edu.description && (
+                          <div
+                            className="text-sm text-gray-700 leading-relaxed mt-1 tiptap-content"
+                            dangerouslySetInnerHTML={{ __html: edu.description }}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -119,7 +129,7 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                           <span className="text-sm text-gray-700 ml-2">({cert.issuer})</span>
                         </div>
                         <span className="text-sm font-medium text-gray-600 italic">
-                          {cert.date}
+                          {formatDateStr(cert.date)}
                         </span>
                       </div>
                     ))}
@@ -154,19 +164,6 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
               );
             }
 
-            if (section.type === 'hobbies' && data.hobbies && data.hobbies.length > 0) {
-              return (
-                <section key={section.id} className="mb-6">
-                  <h3 className="text-lg font-bold uppercase tracking-widest text-gray-800 border-b border-gray-300 pb-1 mb-3">
-                    {section.title}
-                  </h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {data.hobbies.join(" • ")}
-                  </p>
-                </section>
-              );
-            }
-
             if (section.type === 'custom') {
               const customSection = data.customSections.find((s) => s.id === section.id);
               if (customSection && customSection.items.length > 0) {
@@ -184,7 +181,7 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             </h4>
                             {item.date && (
                               <span className="text-sm font-medium text-gray-600 italic">
-                                {item.date}
+                                {formatDateStr(item.date)}
                               </span>
                             )}
                           </div>
@@ -194,9 +191,10 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                             </div>
                           )}
                           {item.description && (
-                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mt-1">
-                              {item.description}
-                            </p>
+                            <div
+                              className="text-sm text-gray-700 leading-relaxed mt-1 tiptap-content"
+                              dangerouslySetInnerHTML={{ __html: item.description }}
+                            />
                           )}
                         </div>
                       ))}
@@ -208,6 +206,26 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
 
             return null;
           })}
+
+        {/* Hidden JSON resume data for re-import fidelity */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            padding: 0,
+            margin: "-1px",
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            whiteSpace: "nowrap",
+            borderWidth: 0,
+            color: "transparent",
+            fontSize: "1px",
+          }}
+        >
+          {`jsonresumedataX:${JSON.stringify(data)}`}
+        </div>
       </div>
     );
   }

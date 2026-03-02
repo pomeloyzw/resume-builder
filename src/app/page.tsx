@@ -1,15 +1,20 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import BuilderForm from "@/components/BuilderForm";
 import ResumePreview from "@/components/ResumePreview";
-import { Download } from "lucide-react";
+import ImportPdfModal from "@/components/ImportPdfModal";
+import { Download, Upload, CheckCircle } from "lucide-react";
 import { useResume, useResumeStore } from "@/lib/ResumeContext";
 import { useReactToPrint } from "react-to-print";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Home() {
   const { template, setTemplate } = useResume();
   const contentRef = useRef<HTMLDivElement>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const handlePrint = useReactToPrint({
     contentRef,
@@ -40,37 +45,49 @@ export default function Home() {
         <header className="h-16 border-b border-gray-200 bg-white/70 backdrop-blur-md px-6 flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700">Template:</span>
-            <select
-              value={template}
-              onChange={(e) => setTemplate(e.target.value as any)}
-              className="text-sm bg-gray-100 border-none rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-            >
-              <option value="modern">Modern</option>
-              <option value="classic">Classic</option>
-            </select>
+            <Select value={template} onValueChange={(val: any) => setTemplate(val)}>
+              <SelectTrigger className="w-[120px] bg-gray-100 border-none cursor-pointer h-8">
+                <SelectValue placeholder="Select template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="modern">Modern</SelectItem>
+                <SelectItem value="classic">Classic</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Import PDF Button */}
+            <Button
+              variant="outline"
+              onClick={() => setShowImportModal(true)}
+              className="px-4 shadow-sm hover:shadow-md h-9"
+            >
+              <Upload size={16} className="mr-2" />
+              Import PDF
+            </Button>
+
             {/* Save Button */}
-            <button
+            <Button
+              variant="outline"
               onClick={() => {
                 // Zustand automatically persists via localStorage, we just show a visual confirmation
-                alert("Resume saved securely to this browser!");
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
               }}
-              className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+              className="px-4 shadow-sm hover:shadow-md h-9"
             >
               Save
-            </button>
-
+            </Button>
 
             {/* Print PDF Button */}
-            <button
+            <Button
               onClick={handlePrint}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md h-9"
             >
-              <Download size={16} />
+              <Download size={16} className="mr-2" />
               Export PDF
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -79,6 +96,19 @@ export default function Home() {
           <ResumePreview contentRef={contentRef} />
         </div>
       </main>
+
+      {/* Import PDF Modal */}
+      {showImportModal && (
+        <ImportPdfModal onClose={() => setShowImportModal(false)} />
+      )}
+
+      {/* Save Success Toast */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-[100] animate-in slide-in-from-bottom-8 fade-in duration-300">
+          <CheckCircle size={20} className="text-green-400" />
+          <span className="font-medium">Resume saved securely!</span>
+        </div>
+      )}
     </div>
   );
 }

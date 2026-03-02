@@ -2,6 +2,8 @@
 
 import React, { useState, KeyboardEvent, useRef } from 'react';
 import { X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 interface TagInputProps {
   tags: string[];
@@ -37,10 +39,10 @@ export default function TagInput({ tags, onChange, placeholder = "Add an item...
   };
 
   return (
-    <div className="flex flex-col gap-1 w-full flex-1">
-      {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+    <div className="flex flex-col gap-1.5 w-full flex-1">
+      {label && <Label>{label}</Label>}
       <div
-        className="w-full flex flex-wrap gap-2 rounded-md border border-gray-300 p-2.5 bg-white min-h-[46px] cursor-text focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all"
+        className="flex min-h-9 w-full flex-wrap gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-within:outline-none focus-within:ring-1 focus-within:ring-ring cursor-text"
         onClick={() => inputRef.current?.focus()}
       >
         {tags.map((tag, index) => (
@@ -49,16 +51,19 @@ export default function TagInput({ tags, onChange, placeholder = "Add an item...
             className="flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-md text-sm font-medium animate-in fade-in zoom-in duration-200"
           >
             {tag}
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
+              aria-label={`Remove tag ${tag}`}
               onClick={(e) => {
                 e.stopPropagation();
                 removeTag(index);
               }}
-              className="hover:bg-blue-200 hover:text-blue-900 rounded-full p-0.5 transition-colors"
+              className="h-5 w-5 hover:bg-blue-200 hover:text-blue-900 rounded-full p-0 transition-colors"
             >
               <X size={14} />
-            </button>
+            </Button>
           </span>
         ))}
         <input

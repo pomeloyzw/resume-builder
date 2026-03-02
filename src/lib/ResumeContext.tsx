@@ -56,6 +56,7 @@ const defaultData: ResumeData = {
       degree: "B.S. in Computer Science",
       startDate: "Sep 2014",
       endDate: "May 2018",
+      description: "",
     }
   ],
   skills: [
@@ -77,7 +78,6 @@ const defaultData: ResumeData = {
       date: "2023",
     }
   ],
-  hobbies: ["Photography", "Open Source Volunteering", "Hiking"],
   customSections: [],
   sectionOrder: [
     { id: "personal", type: "personal", title: "Personal Information", visible: true },
@@ -87,7 +87,6 @@ const defaultData: ResumeData = {
     { id: "skills", type: "skills", title: "Skills", visible: true },
     { id: "languages", type: "languages", title: "Languages", visible: true },
     { id: "certifications", type: "certifications", title: "Certifications and Licenses", visible: true },
-    // { id: "hobbies", type: "hobbies", title: "Hobbies and Interests", visible: true },
   ],
 };
 
