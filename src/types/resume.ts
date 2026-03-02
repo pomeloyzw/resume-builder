@@ -50,7 +50,7 @@ export type CustomSection = {
 
 export type SectionConfig = {
   id: string;
-  type: 'personal' | 'summary' | 'experience' | 'education' | 'skills' | 'languages' | 'certifications' | 'hobbies' | 'custom';
+  type: 'personal' | 'summary' | 'experience' | 'education' | 'skills' | 'languages' | 'certifications' | 'custom';
   title: string;
   visible: boolean;
 };
@@ -63,7 +63,6 @@ export type ResumeData = {
   skills: string[];
   languages: string[];
   certifications: Certification[];
-  hobbies: string[];
   customSections: CustomSection[];
   sectionOrder: SectionConfig[];
 };

@@ -101,7 +101,6 @@ const SECTION_HEADERS = [
   { key: "skills", patterns: [/^(?:technical\s+)?skills$/i, /^core\s+competencies$/i, /^competencies$/i] },
   { key: "certifications", patterns: [/^certifications?$/i, /^licenses?\s*(?:&|and)\s*certifications?$/i, /^certifications?\s*(?:&|and)\s*licenses?$/i] },
   { key: "languages", patterns: [/^languages?$/i] },
-  { key: "hobbies", patterns: [/^hobbies$/i, /^interests$/i, /^hobbies\s*(?:&|and)\s*interests$/i] },
 ];
 
 function identifySection(line: string): string | null {
@@ -269,9 +268,6 @@ export function parsePdfText(text: string): Partial<ResumeData> {
   // --- certifications ---
   const certifications: Certification[] = parseCertifications(sections["certifications"] ?? []);
 
-  // --- hobbies ---
-  const hobbies: string[] = parseListSection(sections["hobbies"] ?? []);
-
   // Build sectionOrder from what we found
   const sectionOrder = [
     { id: "personal", type: "personal" as const, title: "Personal Information", visible: true },
@@ -291,7 +287,6 @@ export function parsePdfText(text: string): Partial<ResumeData> {
     skills,
     languages,
     certifications,
-    hobbies,
     customSections: [],
     sectionOrder,
   };
@@ -470,8 +465,8 @@ function parseCertifications(lines: string[]): Certification[] {
 }
 
 function parseListSection(lines: string[]): string[] {
-  // Skills/languages/hobbies can be comma-separated, bullet-separated, or one-per-line
-  const joined = lines.join(" ");
+  // Skills/languages can be comma-separated, bullet-separated, or one-per-line
+  const joined = lines.join("\n");
 
   // First try splitting on common delimiters
   const items = joined

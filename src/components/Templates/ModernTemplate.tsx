@@ -66,7 +66,7 @@ const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
 
           {/* Sidebar Sections */}
           {data.sectionOrder
-            .filter((s) => s.visible && ['skills', 'languages', 'hobbies'].includes(s.type))
+            .filter((s) => s.visible && ['skills', 'languages'].includes(s.type))
             .map((section) => {
               if (section.type === 'skills' && data.skills && data.skills.length > 0) {
                 return (
@@ -100,20 +100,6 @@ const ModernTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
                   </div>
                 );
               }
-
-              if (section.type === 'hobbies' && data.hobbies && data.hobbies.length > 0) {
-                return (
-                  <div key={section.id} className="mt-8">
-                    <h3 className="text-lg font-bold text-white mb-4 uppercase tracking-widest border-b border-blue-700 pb-2">{section.title}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="text-sm text-blue-100 leading-relaxed">
-                        {data.hobbies.join(" • ")}
-                      </span>
-                    </div>
-                  </div>
-                );
-              }
-
               return null;
             })}
         </div>

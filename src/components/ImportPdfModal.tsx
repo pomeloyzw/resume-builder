@@ -137,7 +137,6 @@ export default function ImportPdfModal({ onClose }: { onClose: () => void }) {
         skills: parsedData.skills?.length ? parsedData.skills : prev.skills,
         languages: parsedData.languages?.length ? parsedData.languages : prev.languages,
         certifications: parsedData.certifications?.length ? parsedData.certifications : prev.certifications,
-        hobbies: parsedData.hobbies?.length ? parsedData.hobbies : prev.hobbies,
         customSections: prev.customSections,
         sectionOrder: parsedData.sectionOrder ?? prev.sectionOrder,
       };

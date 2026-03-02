@@ -164,19 +164,6 @@ const ClassicTemplate = forwardRef<HTMLDivElement, { data: ResumeData }>(
               );
             }
 
-            if (section.type === 'hobbies' && data.hobbies && data.hobbies.length > 0) {
-              return (
-                <section key={section.id} className="mb-6">
-                  <h3 className="text-lg font-bold uppercase tracking-widest text-gray-800 border-b border-gray-300 pb-1 mb-3">
-                    {section.title}
-                  </h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {data.hobbies.join(" • ")}
-                  </p>
-                </section>
-              );
-            }
-
             if (section.type === 'custom') {
               const customSection = data.customSections.find((s) => s.id === section.id);
               if (customSection && customSection.items.length > 0) {

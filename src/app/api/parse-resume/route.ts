@@ -44,7 +44,6 @@ const RESUME_SCHEMA_PROMPT = `You are a resume data extraction expert. Given the
       "date": "string"
     }
   ],
-  "hobbies": ["string"]
 }
 
 Rules:

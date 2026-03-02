@@ -521,17 +521,6 @@ export default function BuilderForm() {
             </Button>
           </div>
         );
-      case 'hobbies':
-        return (
-          <div className="p-4">
-            <TagInput
-              label="Hobbies & Interests"
-              tags={data.hobbies}
-              onChange={(tags) => setData(prev => ({ ...prev, hobbies: tags }))}
-              placeholder="e.g. Photography, Hiking"
-            />
-          </div>
-        );
       default:
         // Handle custom sections dynamically
         const customSection = data.customSections.find(s => s.id === sectionId);
