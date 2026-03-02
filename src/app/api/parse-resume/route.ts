@@ -76,6 +76,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const MAX_INPUT_CHARS = 30_000;
+    if (text.length > MAX_INPUT_CHARS) {
+      return NextResponse.json(
+        { error: `Payload Too Large: Resume text exceeds ${MAX_INPUT_CHARS} characters limit.` },
+        { status: 413 }
+      );
+    }
+
     const openai = new OpenAI({ apiKey });
 
     const completion = await openai.chat.completions.create({
